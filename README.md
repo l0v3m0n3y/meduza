@@ -7,7 +7,7 @@ import meduza
 let client = Meduza()
 
 do {
-    let news = try await client.get_news()
+    let news = try await client.getNews()
     print(news)
 } catch {
     print("Error: \(error)")
