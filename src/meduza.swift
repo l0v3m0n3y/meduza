@@ -36,71 +36,57 @@ public class Meduza {
 
     }
     
-    public func get_banners() async throws -> Any {
-        guard let url = URL(string: "\(api)/banners") else {
+    private func fetchJSON(from urlString: String,method: HTTPMethod = .get,body: Data? = nil,queryParameters: [String: String]? = nil) async throws -> Any {
+        var urlComponents = URLComponents(string: urlString)
+        if let queryParameters = queryParameters {
+            urlComponents?.queryItems = queryParameters.map { URLQueryItem(name: $0.key, value: $0.value) }
+        }
+        guard let url = urlComponents?.url else {
             throw NSError(domain: "Invalid URL", code: -1)
         }
         var request = URLRequest(url: url)
-        request.httpMethod = "GET"
+        request.httpMethod = method.rawValue
         request.allHTTPHeaderFields = headers
+        if let body = body {
+            request.httpBody = body
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
         let (data, _) = try await URLSession.shared.data(for: request)
         return try JSONSerialization.jsonObject(with: data)
     }
     
-    public func get_news() async throws -> Any {
-        guard let url = URL(string: "\(api)/screens/news") else {
-            throw NSError(domain: "Invalid URL", code: -1)
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.allHTTPHeaderFields = headers
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONSerialization.jsonObject(with: data)
+    public func getBanners() async throws -> Any {
+        return try await fetchJSON(from: "\(api)/banners")
     }
     
-    public func new_search(chrono: String="news",page: Int=0,per_page: Int=20,locale: String="ru") async throws -> Any {
-        guard let url = URL(string: "\(api)/new_search?chrono=\(chrono)&page=\(page)&per_page=\(per_page)&locale=\(locale)") else {
-            throw NSError(domain: "Invalid URL", code: -1)
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.allHTTPHeaderFields = headers
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONSerialization.jsonObject(with: data)
+    public func getNews() async throws -> Any {
+        return try await fetchJSON(from: "\(api)/screens/news")
     }
     
-    public func get_news_page(feature: String) async throws -> Any {
+    public func newSearch(chrono: String="news",page: Int=0,perPage: Int=20,locale: String="ru") async throws -> Any {
+        let urlString = "\(api)/new_search"
+        
+        let queryParameters: [String: String] = [
+            "chrono": chrono,
+            "page": String(page),
+            "per_page": String(perPage),
+            "locale": locale
+        ]
+        
+        return try await fetchJSON(from: urlString,method: .get,queryParameters: queryParameters)
+    }
+    
+    public func getNewsPage(feature: String) async throws -> Any {
         //https://meduza.io/api/w5/feature/2026/04/24/v-2024-godu-v-mosgordumu-ne-vzyali-ni-odnogo-voennogo-zato-teper-moskva-sama-prodvigaet-na-vybory-v-gosdumu-kak-minimum-chetyreh-veteranov-svo
         //or https://meduza.io/api/w5/episodes/2026/04/24/iz-za-voyny-na-blizhnem-vostoke-rastut-tseny-na-aviabilety-tysyachi-reysov-otmenyayutsya-sletat-v-otpusk-ne-poluchitsya
-        guard let url = URL(string: "\(api)/\(feature)") else {
-            throw NSError(domain: "Invalid URL", code: -1)
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.allHTTPHeaderFields = headers
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONSerialization.jsonObject(with: data)
+        return try await fetchJSON(from: "\(api)/\(feature)")
     }
     
-    public func get_podcasts_list() async throws -> Any {
-        guard let url = URL(string: "\(api)/screens/specials/podcasts-list") else {
-            throw NSError(domain: "Invalid URL", code: -1)
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.allHTTPHeaderFields = headers
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONSerialization.jsonObject(with: data)
+    public func getPodcastsList() async throws -> Any {
+        return try await fetchJSON(from: "\(api)/screens/specials/podcasts-list")
     }
     
-    public func under_the_sun() async throws -> Any {
-        guard let url = URL(string: "\(api)/screens/specials/under-the-sun") else {
-            throw NSError(domain: "Invalid URL", code: -1)
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.allHTTPHeaderFields = headers
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONSerialization.jsonObject(with: data)
+    public func underTheSun() async throws -> Any {
+        return try await fetchJSON(from: "\(api)/screens/specials/under-the-sun")
     }
 }
